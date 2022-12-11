@@ -7,11 +7,13 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.Executor;
 
-public class Replica{
+public class Replica {
 
     private static final String path = "replicas.txt";
 
@@ -23,7 +25,17 @@ public class Replica{
 
     private Executor exe;
 
-    public Replica(String[] args) {
+    private ArrayList<Integer> portsArray = new ArrayList<>();
+
+    public Replica(String[] args) throws IOException {
+
+        for (int i = 0; i < 5; i++){
+            portsArray.add(getPort(Integer.toString(i)));
+        }
+
+        System.out.println("PRINT: " + args[0]);
+
+        System.out.println(portsArray);
 
         try {
 
@@ -34,33 +46,50 @@ public class Replica{
             ClientRMI clientRMI = new ClientRMI(port, Integer.toString(line));
 
             Scanner in = new Scanner(System.in);
-            while(true){
+            while (true) {
                 System.out.println("Input > ");
                 String line = in.nextLine();
 
                 String[] split = line.split("\s+");
 
-                String id = split[0];
-                String requestLabel = split[1];
-                String requestData = split[2];
+                if (split.length == 1 && split[0].equals("STATE")) {
 
+                    String requestLabel = split[0];
+                    String requestData = split[0];
 
+                    //clientRMI.quorumInvoke(requestLabel, requestData);
+                } else if (split.length == 2 && split[1].equals("STATE")) {
 
-                if(line.equalsIgnoreCase("exit")) break;
+                    String id = split[0];
+                    String requestLabel = split[1];
+                    String requestData = split[1];
 
-                String result = clientRMI.Invoke(id, requestLabel, requestData);
-                System.out.println("Response of replica " + id + ":" + result);
+                    //clientRMI.invoke(id, requestLabel, requestData);
+                } else if (split.length == 3) {
+                    String id = split[0];
+                    String requestLabel = split[1];
+                    String requestData = split[2];
+
+                    //clientRMI.invoke(id, requestLabel, requestData);
+                } else if (split.length == 2) {
+
+                    String requestLabel = split[0];
+                    String requestData = split[1];
+
+                    //clientRMI.quorumInvoke(requestLabel, requestData);
+                } else {
+                    System.out.println("no valid inputs");
+                }
+
+                if (line.equalsIgnoreCase("exit")) break;
             }
-
-            //ClientRMI clientRMI = new ClientRMI(port);
-            //clientRMI.Invoke(identifier, "GET", "N");
 
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static void main(String[] args)  {
+    public static void main(String[] args) throws IOException {
 
         if (args.length == 0) {
             System.err.println("Argument count is zero");
@@ -83,4 +112,5 @@ public class Replica{
 
         return port;
     }
+
 }

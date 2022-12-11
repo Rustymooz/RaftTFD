@@ -41,6 +41,8 @@ public class ClientRMI{
         new Thread(new Thread_to_send_HeartBeats()).start();
     }
 
+    // sends an apend entry to a specific replica
+    // used in case of a replica recovery to update its log
     public void invoke(String id, String requestLabel, byte[] requestData, int request_numbers) throws RemoteException, NotBoundException {
 
         try {
@@ -56,7 +58,7 @@ public class ClientRMI{
         }
     }
 
-
+    // broadcast apend entries to all replicas in the quorum
     public byte[] quorumInvoke(String requestLabel, byte[] requestData, int request_number) throws RemoteException, NotBoundException{
         System.out.println("quorumInvoke");
         try {
@@ -74,6 +76,7 @@ public class ClientRMI{
                     continue;
                 }
 
+                // create 1 thread for each replica in quorum
                 Executors.newSingleThreadExecutor().execute(new Runnable() {
 
                     @Override
@@ -143,7 +146,7 @@ public class ClientRMI{
                     System.out.println("STUB " + final_i + " : " + nVotes[final_i]);
                     continue;
                 }
-
+                // 1 thread to send the vote request to each replica
                 Executors.newSingleThreadExecutor().execute(new Runnable() {
 
                     @Override
@@ -172,6 +175,7 @@ public class ClientRMI{
                     favorableVotes++;
                 }
             }
+            // becomes leader if it receives more than half of the votes
             if(favorableVotes > line_cnt/2){
                 isLeader = true;
                 marosca = true;
@@ -184,6 +188,7 @@ public class ClientRMI{
         }
     }
 
+    // called by execute, calls quorum invoke
     public byte[] appendEntry(String requestLabel, byte[] byteArray, int request_number) throws NotBoundException, RemoteException {
         System.out.println("appendEntry");
         return quorumInvoke(requestLabel, byteArray, request_number);
@@ -221,20 +226,20 @@ public class ClientRMI{
         }
     }
 
-
+    // thread to try to bind to stubs
     class Thread_to_bind_stubs implements Runnable {
 
         @Override
         public void run() {
-            boolean gringo = false;
-            while(!gringo){
+            boolean bol = false;
+            while(!bol){
                 for (int i = 0; i < line_cnt; i++) {
                     if(stubs[i] != null){
                         continue;
                     }
                     stubBind(i);
                     if(!verify_stubs()){
-                        gringo = true;
+                        bol = true;
                     }
                 }
             }
@@ -252,7 +257,7 @@ public class ClientRMI{
         }
     }
 
-
+    // thread to keep sending heartbeats if it is the leader
     class Thread_to_send_HeartBeats implements Runnable {
         boolean oxi15 = false;
         @Override

@@ -43,6 +43,9 @@ public class ServerRMI implements RegisterHandler {
 
             System.out.println("Sou a replica: " + id);
 
+            //timer for each replia
+            //this timer is refreshed when an entry or an heartbeat is received
+            //if timeout, the replica becomes candidate and sends a vote request
             Executors.newSingleThreadExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
@@ -83,6 +86,7 @@ public class ServerRMI implements RegisterHandler {
         return operations;
     }
 
+    // processes the request from the client, adds in the log
     @Override
     public byte[] processRequest(String requestLabel, byte[] requestData, int request_number) throws RemoteException, NotBoundException {
         byte[] operation;
@@ -133,6 +137,7 @@ public class ServerRMI implements RegisterHandler {
         return null;
     }
 
+    // answers to vote request, if that request has an higher term, it will vote for it
     @Override
     public boolean answerVoteRequest(int term){
 
@@ -149,6 +154,7 @@ public class ServerRMI implements RegisterHandler {
         }
     }
 
+    // resets the timer
     public void receiveHeartBeat(int term, int replica) throws RemoteException{
         this.term = term;
         this.already_voted = term;
@@ -161,7 +167,7 @@ public class ServerRMI implements RegisterHandler {
         System.out.println("Heartbeat received from replica: " + replica);
     }
 
-
+    // update own log with the client requests
     public byte[] processOwnOperation(String requestLabel, byte[] requestData, int request_number){
         byte[] operation;
         switch (requestLabel) {
@@ -209,10 +215,13 @@ public class ServerRMI implements RegisterHandler {
         return null;
     }
 
+    // retrieves the current term of the server
     public int getTerm(){
         return term;
     }
 
+    // receives the request from the client
+    // clientSerialNumbers is a hash table containing all the serial number requests already executed for each client
     @Override
     public byte[] execute(String requestLabel, byte[] byteArray, Client client, int serialNumber) throws NotBoundException, RemoteException {
 

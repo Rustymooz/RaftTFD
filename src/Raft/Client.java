@@ -33,6 +33,7 @@ public class Client implements ClientLibrary, Serializable {
         new Thread(new Client.SimpleProgram()).start();
     }
 
+    //sends the request to the server through the execute with the byte array to be added in the log, the client serial number and the client instance
     public byte[] request(String requestLabel, byte[] reqeustArray, Client client, int serialNumber) throws RemoteException, NotBoundException {
         try{
             byte[] brita = stub.execute(requestLabel, reqeustArray, client, serialNumber);
@@ -45,6 +46,7 @@ public class Client implements ClientLibrary, Serializable {
         }
     }
 
+    //First tries to bind to a random server, if it is not the leader, that server will tell the client who is the leader, client connects to it
     public void serverLookup(int serverID){
         if(!boundToLeader){
             try{
